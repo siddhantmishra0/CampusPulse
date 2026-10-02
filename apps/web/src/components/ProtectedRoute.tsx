@@ -29,7 +29,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     if (!hasRole) {
       return (
         <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="bg-red-50 text-red-700 p-6 rounded-lg max-w-md text-center shadow-sm">
+          <div className="bg-error-container text-on-error-container p-6 rounded-lg max-w-md text-center border border-error/40">
             <h2 className="text-xl font-bold mb-2">Access Denied</h2>
             <p>You don't have permission to view this page.</p>
             <Button className="mt-4" onClick={() => window.history.back()}>Go Back</Button>

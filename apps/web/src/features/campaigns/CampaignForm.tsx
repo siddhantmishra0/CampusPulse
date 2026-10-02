@@ -7,14 +7,17 @@ import { Input } from '../../components/ui/Input';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/Card';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/Alert';
 
-export function CampaignForm() {
-  const navigate = useNavigate();
+type Department = {
+  id: string;
+  name: string;
+  code: string;
+};
+
+export function CampaignForm() {  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
-  // Note: For a complete implementation, these would be populated from the API
-  // via react-select or similar autocomplete components.
-  const { data: departments } = useQuery({
+  const { data: departments, isLoading: isLoadingDepartments } = useQuery<Department[]>({
     queryKey: ['departments'],
     queryFn: async () => {
       const res = await api.get('/departments');
@@ -84,8 +87,8 @@ export function CampaignForm() {
             )}
             
             <div className="space-y-2">
-              <label htmlFor="title" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Campaign Name <span className="text-red-500">*</span>
+              <label htmlFor="title" className="block text-sm font-medium text-on-surface ">
+                Campaign Name <span className="text-error">*</span>
               </label>
               <Input
                 id="title"
@@ -99,15 +102,15 @@ export function CampaignForm() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="campaignType" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Campaign Type <span className="text-red-500">*</span>
+              <label htmlFor="campaignType" className="block text-sm font-medium text-on-surface ">
+                Campaign Type <span className="text-error">*</span>
               </label>
               <select
                 id="campaignType"
                 name="campaignType"
                 value={formData.campaignType}
                 onChange={handleChange}
-                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:border-slate-700 dark:text-slate-50 dark:bg-slate-900"
+                className="flex h-10 w-full rounded-md border border-outline-variant bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent   "
               >
                 <option value="SUBJECT">Subject</option>
                 <option value="FACULTY">Faculty</option>
@@ -118,8 +121,8 @@ export function CampaignForm() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Description <span className="text-red-500">*</span>
+              <label htmlFor="description" className="block text-sm font-medium text-on-surface ">
+                Description <span className="text-error">*</span>
               </label>
               <textarea
                 id="description"
@@ -128,15 +131,15 @@ export function CampaignForm() {
                 rows={4}
                 value={formData.description}
                 onChange={handleChange}
-                className="flex w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:border-slate-700 dark:text-slate-50 dark:focus:ring-indigo-400"
+                className="flex w-full rounded-md border border-outline-variant bg-transparent px-3 py-2 text-sm placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Describe the purpose of this feedback campaign..."
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label htmlFor="startAt" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Start Date & Time <span className="text-red-500">*</span>
+                <label htmlFor="startAt" className="block text-sm font-medium text-on-surface ">
+                  Start Date & Time <span className="text-error">*</span>
                 </label>
                 <Input
                   id="startAt"
@@ -148,8 +151,8 @@ export function CampaignForm() {
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="endAt" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  End Date & Time <span className="text-red-500">*</span>
+                <label htmlFor="endAt" className="block text-sm font-medium text-on-surface ">
+                  End Date & Time <span className="text-error">*</span>
                 </label>
                 <Input
                   id="endAt"
@@ -163,7 +166,7 @@ export function CampaignForm() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label htmlFor="departmentId" className="block text-sm font-medium text-on-surface ">
                 Target Department (Optional)
               </label>
               <select
@@ -171,16 +174,24 @@ export function CampaignForm() {
                 name="departmentId"
                 value={formData.departmentId}
                 onChange={handleChange}
-                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:border-slate-700 dark:text-slate-50 dark:bg-slate-900"
+                disabled={isLoadingDepartments}
+                className="flex h-10 w-full rounded-md border border-outline-variant bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-60   "
               >
                 <option value="">All Departments (Institution-wide)</option>
-                {departments?.map((dept: any) => (
+                {departments?.map((dept) => (
                   <option key={dept.id} value={dept.id}>{dept.name}</option>
                 ))}
               </select>
+              <p className="text-xs text-on-surface-variant ">
+                {isLoadingDepartments
+                  ? 'Loading departments...'
+                  : departments?.length
+                    ? `${departments.length} department${departments.length === 1 ? '' : 's'} available. Leave as institution-wide to target everyone.`
+                    : 'No departments have been created yet. Target will be institution-wide.'}
+              </p>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end space-x-3 bg-slate-50 dark:bg-slate-900/50 py-4">
+          <CardFooter className="flex justify-end space-x-3 bg-surface-container-low  py-4">
             <Button type="button" variant="outline" onClick={() => navigate('/campaigns')}>
               Cancel
             </Button>

@@ -24,6 +24,7 @@ import { IssueDetail } from './features/issues/IssueDetail';
 import { KnowledgeBase } from './features/documents/KnowledgeBase';
 import { DocumentDetail } from './features/documents/DocumentDetail';
 import { SettingsPage } from './features/settings/SettingsPage';
+import { OwnerPage } from './features/owner/OwnerPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,7 +62,7 @@ export function App() {
               <Route path="dashboard" element={
                 <div className="p-8">
                   <h1 className="text-2xl font-bold">Welcome to CampusPulse</h1>
-                  <p className="mt-2 text-slate-500">Select an option from the sidebar to get started.</p>
+                  <p className="mt-2 text-on-surface-variant">Select an option from the sidebar to get started.</p>
                 </div>
               } />
 
@@ -117,15 +118,17 @@ export function App() {
                 } />
               </Route>
 
-              {/* Knowledge Base Routes */}
+              {/* Knowledge Base Routes — reviewer-only. The documents API and the
+                  sidebar nav both restrict these to owner/admin/reviewer, so the
+                  route guard must not admit FACULTY or the page renders 403s. */}
               <Route path="knowledge">
                 <Route index element={
-                  <ProtectedRoute allowedRoles={[UserRole.PLATFORM_OWNER, UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER, UserRole.FACULTY]}>
+                  <ProtectedRoute allowedRoles={[UserRole.PLATFORM_OWNER, UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER]}>
                     <KnowledgeBase />
                   </ProtectedRoute>
                 } />
                 <Route path=":id" element={
-                  <ProtectedRoute allowedRoles={[UserRole.PLATFORM_OWNER, UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER, UserRole.FACULTY]}>
+                  <ProtectedRoute allowedRoles={[UserRole.PLATFORM_OWNER, UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER]}>
                     <DocumentDetail />
                   </ProtectedRoute>
                 } />
@@ -145,8 +148,15 @@ export function App() {
                 } />
               </Route>
 
-              {/* Settings Route */}
-              <Route path="settings" element={
+            {/* Platform Owner Routes */}
+            <Route path="owner" element={
+              <ProtectedRoute allowedRoles={[UserRole.PLATFORM_OWNER]}>
+                <OwnerPage />
+              </ProtectedRoute>
+            } />
+
+            {/* Settings Route */}
+            <Route path="settings" element={
                 <ProtectedRoute allowedRoles={[UserRole.PLATFORM_OWNER, UserRole.INSTITUTION_ADMIN]}>
                   <SettingsPage />
                 </ProtectedRoute>

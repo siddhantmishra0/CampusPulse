@@ -10,6 +10,11 @@ const envSchema = z.object({
   LLM_API_KEY: z.string().min(1),
   LLM_BASE_URL: z.string().url(),
   LLM_MODEL_NAME: z.string().min(1),
+  // Embeddings (Google Gemini — Groq has no embeddings endpoint)
+  GEMINI_API_KEY: z.string().default(''),
+  GEMINI_EMBEDDING_MODEL: z.string().default('gemini-embedding-001'),
+  // Must match the vector() width of DocumentChunk.embedding
+  EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1536),
 });
 
 const _env = envSchema.safeParse(process.env);

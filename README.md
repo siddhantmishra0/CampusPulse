@@ -45,6 +45,7 @@ Fine-grained permission management ensures that users only access resources rele
 - **Authentication**: JWT-based authentication using HTTP-only cookies and Bearer access tokens (with separate access and refresh token secrets).
 - **Session Protection**: Passwords stored using industry-standard `bcryptjs` salted hashing.
 - **Role Enforcement Middleware**: Express middleware verifies user claims and permissions before accessing protected endpoint paths.
+- **Platform Owner Admin Dashboard (`/owner`)**: System-wide administrative control panel allowing Platform Owners to provision tenants, manage institutional users, assign/revoke roles, reset user credentials, and toggle account activation states (`/api/v1/users`).
 
 ---
 
@@ -95,12 +96,16 @@ Raw feedback is processed asynchronously in the background without blocking API 
 
 ### 5. Retrieval-Augmented Generation (RAG) Document System
 
-CampusPulse incorporates a full RAG pipeline to contextualize AI responses and allow institution administrators to query campus policy documents.
+CampusPulse incorporates a full RAG pipeline to contextualize AI responses and allow institution administrators to query campus policy documents via two distinct modes: **Semantic Search** and **RAG Question Answering (`/ask`)**.
 
-- **Document Ingestion**: Upload course syllabi, university policy handbooks, grading rubrics, and departmental guidelines (`PDF` format).
-- **Text Splitting & Parsing**: Extracts raw text via `pdf-parse` and divides documents into semantically coherent chunks using `@langchain/textsplitters`.
-- **Vector Embeddings**: Computes 1536-dimensional embeddings for each document chunk using OpenAI embedding models (`text-embedding-3-small` / `text-embedding-ada-002`).
-- **pgvector Integration**: Embeddings are stored directly within PostgreSQL using the `pgvector` extension (`vector(1536)`). Vector distance indices allow lightning-fast cosine similarity searches to ground AI answers in official campus documentation.
+- **Document Ingestion & Page-Aware Parsing**: Upload course syllabi, policy handbooks, rubrics, and guidelines (`PDF` format). The worker parses PDF files page-by-page using `pdf-parse`, ensuring document chunks maintain accurate page number metadata (`pageNumber`) for precise source attribution.
+- **Text Splitting & Chunking**: Uses `@langchain/textsplitters` (`RecursiveCharacterTextSplitter`) to divide page content into semantically coherent chunks (1,000 characters, 200 overlap).
+- **Google Gemini Vector Embeddings**: Computes 1536-dimensional embeddings for each document chunk using Google's `gemini-embedding-001` via Gemini's OpenAI-compatible embeddings endpoint. The model returns 3072 dimensions natively and is truncated to 1536 using Matryoshka (MRL) learning, which costs no measurable retrieval quality and matches the `vector(1536)` column exactly. A free API key from [Google AI Studio](https://aistudio.google.com/apikey) is sufficient.
+- **pgvector Integration**: Embeddings are stored directly within PostgreSQL using the `pgvector` extension (`vector(1536)`). Cosine similarity distance (`<=>`) queries return top relevant chunks in milliseconds.
+- **Interactive RAG Question Answering (`/api/v1/documents/ask`)**: Generates synthesis-grounded natural language answers using the configured LLM, citing specific document titles, types, page numbers, and match confidence scores (`%`).
+- **Clean Cascading Removal**: Permanent document deletion (`DELETE /api/v1/documents/:id`) unlinks physical files from disk storage (`apps/uploads/`) and cascades deletion of document versions and vector chunk embeddings in PostgreSQL, preventing orphaned embeddings.
+
+> **Note:** Groq does not expose an embeddings endpoint (`POST /v1/embeddings` returns 404), so `LLM_API_KEY` cannot be used for embeddings. Chat/LLM traffic uses Groq via `LLM_BASE_URL`; embeddings use Gemini via `GEMINI_API_KEY`.
 
 ---
 
@@ -183,8 +188,8 @@ graph TD
 
 ### **Background Worker (`apps/worker`)**
 - **Job Processing**: BullMQ, Node.js
-- **AI & RAG Pipeline**: LangChain (`@langchain/openai`, `@langchain/core`), PDF parsing (`pdf-parse`)
-- **LLM Integrations**: Groq API (GPT-OSS / Llama models), OpenAI Vector Embeddings
+- **AI & RAG Pipeline**: LangChain (`@langchain/openai`, `@langchain/core`), page-aware PDF parsing (`pdf-parse`)
+- **LLM Integrations**: Groq API (GPT-OSS / Llama models), Google Gemini Embeddings API (`gemini-embedding-001` via Matryoshka 1536-dim truncation)
 
 ### **Shared Packages (`packages/shared`)**
 - Shared TypeScript interfaces, Zod schemas, contract definitions, and role enumerations across frontend, backend, and worker.
@@ -201,7 +206,7 @@ CampusPulse enforces fine-grained Role-Based Access Control (RBAC):
 
 | Role | Icon | Scope & Capabilities |
 | :--- | :---: | :--- |
-| **`PLATFORM_OWNER`** | 👑 | System-wide access, tenant creation, global system configuration & health monitoring. |
+| **`PLATFORM_OWNER`** | 👑 | System-wide access, dedicated Platform Admin control panel (`/owner`), multi-tenant account provisioning, user role management, credential resets, & system health monitoring. |
 | **`INSTITUTION_ADMIN`** | 🏫 | Full institutional management: create campaigns, manage departments, faculty, subjects, academic years, and view analytics. |
 | **`DEPARTMENT_REVIEWER`** | 🔍 | Department-level access: review identified issues, define improvement actions, and publish updates to students. |
 | **`FACULTY`** | 👨‍🏫 | View subject/course feedback analysis, campaign responses, and continuous improvement updates. |
@@ -214,12 +219,14 @@ CampusPulse enforces fine-grained Role-Based Access Control (RBAC):
 ```
 CampusPulse/
 ├── apps/
-│   ├── api/                # Core Express REST API (Auth, Campaigns, Issues, Analytics)
+│   ├── api/                # Core Express REST API (Auth, Users, Campaigns, Issues, Documents/RAG, Analytics)
 │   │   ├── prisma/         # Prisma Schema & Database Seed Scripts
 │   │   └── src/
-│   ├── web/                # React Single Page Application (UI, Dashboards, Chat)
+│   │       └── modules/    # API Modules (auth, users, campaigns, documents, issues, analytics, etc.)
+│   ├── web/                # React Single Page Application (UI, Dashboards, Platform Owner Panel, Chat)
 │   │   └── src/
-│   ├── worker/             # BullMQ Worker (Sentiment Analysis, Document RAG Ingestion)
+│   │       └── features/   # Feature modules (owner, campaigns, documents, analytics, feedback, etc.)
+│   ├── worker/             # BullMQ Worker (Sentiment Analysis, Page-Aware RAG Ingestion)
 │   │   └── src/
 │   └── uploads/            # Uploaded document storage
 ├── packages/
@@ -347,7 +354,12 @@ JWT_REFRESH_SECRET="dev-refresh-secret-do-not-use-in-prod"
 LLM_API_KEY="your-groq-or-openai-api-key"
 LLM_BASE_URL="https://api.groq.com/openai/v1"
 LLM_MODEL_NAME="openai/gpt-oss-120b"
-OPENAI_API_KEY="your-openai-key-for-embeddings"
+
+# Embeddings (Google Gemini - required for the Knowledge Base / RAG search)
+# Free key: https://aistudio.google.com/apikey
+GEMINI_API_KEY="your-gemini-api-key"
+GEMINI_EMBEDDING_MODEL="gemini-embedding-001"
+EMBEDDING_DIMENSIONS=1536
 ```
 
 ---

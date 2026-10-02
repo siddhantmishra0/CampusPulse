@@ -73,14 +73,14 @@ export function FeedbackSubmission() {
   if (success) {
     return (
       <div className="max-w-2xl mx-auto py-12">
-        <Card className="text-center p-8 bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800">
-          <div className="mb-4 text-green-500">
+        <Card className="text-center p-8 bg-surface-container-low border-success/40">
+          <div className="mb-4 text-success">
             <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <CardTitle className="text-2xl text-green-700 dark:text-green-400 mb-2">Feedback Submitted!</CardTitle>
-          <CardDescription className="text-slate-600 dark:text-slate-400 text-lg">
+          <CardTitle className="font-headline-sm text-headline-sm text-success mb-2">Feedback Submitted!</CardTitle>
+          <CardDescription className="text-on-surface-variant  text-lg">
             Thank you for sharing your thoughts. Your feedback is completely anonymous and will help improve the institution.
           </CardDescription>
           <div className="mt-8">
@@ -95,16 +95,16 @@ export function FeedbackSubmission() {
     <div className="max-w-3xl mx-auto py-8">
       <div className="mb-6">
         <Button variant="ghost" onClick={() => navigate('/student/dashboard')} className="mb-4">← Back to Dashboard</Button>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">{campaign?.name}</h1>
-        <p className="text-slate-500 mt-2">{campaign?.description}</p>
+        <h1 className="text-3xl font-bold text-on-surface ">{campaign?.name}</h1>
+        <p className="text-on-surface-variant mt-2">{campaign?.description}</p>
       </div>
 
       <Card>
         <form onSubmit={handleSubmit}>
-          <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+          <CardHeader className="bg-surface-container-low  border-b border-outline-variant ">
             <CardTitle>Share Your Thoughts</CardTitle>
             <CardDescription>
-              Your feedback is <span className="font-semibold text-indigo-600 dark:text-indigo-400">100% anonymous</span>. We use a secure token system that disconnects your identity from your response.
+              Your feedback is <span className="font-semibold text-primary ">100% anonymous</span>. We use a secure token system that disconnects your identity from your response.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
@@ -116,7 +116,7 @@ export function FeedbackSubmission() {
             )}
             
             <div className="space-y-4">
-              <label htmlFor="feedback" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label htmlFor="feedback" className="block text-sm font-medium text-on-surface ">
                 What would you like to share?
               </label>
               <textarea
@@ -127,9 +127,9 @@ export function FeedbackSubmission() {
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 placeholder="Write your feedback here..."
-                className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 shadow-sm"
+                className="w-full rounded-md border border-outline-variant bg-surface-container-lowest px-4 py-3 text-sm placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent    shadow-sm"
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-on-surface-variant">
                 Please be constructive. This feedback goes directly to department reviewers.
               </p>
             </div>
@@ -148,17 +148,17 @@ export function FeedbackSubmission() {
       </Card>
       
       {/* Conversational mode CTA */}
-      <div className="mt-8 text-center p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
-        <h3 className="text-lg font-medium text-indigo-900 dark:text-indigo-300">Prefer a conversation?</h3>
-        <p className="text-indigo-700 dark:text-indigo-400 mt-2 mb-4 text-sm max-w-lg mx-auto">
+      <div className="mt-8 text-center p-6 bg-primary-fixed rounded-xl border border-primary/30">
+        <h3 className="text-lg font-medium text-primary">Prefer a conversation?</h3>
+        <p className="text-primary mt-2 mb-4 text-sm max-w-lg mx-auto">
           Not sure what to write? Try our AI-guided feedback assistant to help you articulate your thoughts clearly.
         </p>
         {conversationError && (
-          <p className="text-red-500 text-sm mb-3">{conversationError}</p>
+          <p className="text-error text-sm mb-3">{conversationError}</p>
         )}
         <Button
           variant="outline"
-          className="border-indigo-200 text-indigo-600 dark:border-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+          className="border-primary/40 text-primary hover:bg-primary-fixed"
           onClick={async () => {
             setConversationError(null);
             try {

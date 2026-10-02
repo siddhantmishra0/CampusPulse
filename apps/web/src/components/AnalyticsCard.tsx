@@ -21,24 +21,24 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md',
-        'transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/10 hover:shadow-2xl hover:shadow-violet-500/10',
+        // Light-theme card: an explicit border is required because the page
+        // background and the card surface are within ~2% of each other, so a
+        // shadow alone leaves the box visually undefined.
+        'group relative overflow-hidden rounded-xl border border-outline-variant/50 bg-surface-container-lowest p-space-lg shadow-sm',
+        'transition-all duration-200 hover:border-outline-variant hover:shadow-md',
         gradient &&
-          'before:pointer-events-none before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-violet-600/10 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100',
+          'bg-gradient-to-br from-primary-fixed/60 to-surface-container-lowest',
         className,
       )}
     >
-      {/* Glow on hover */}
-      <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-violet-500/10 blur-3xl transition-all duration-500 group-hover:bg-violet-500/20" />
-
       <div className="relative">
-        <div className="mb-4 flex items-start justify-between">
+        <div className="mb-3 flex items-start justify-between gap-2">
           <div>
-            <h3 className="text-sm font-medium uppercase tracking-wider text-slate-400">{title}</h3>
-            {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
+            <h3 className="font-label-sm text-label-sm uppercase tracking-wider text-outline">{title}</h3>
+            {subtitle && <p className="mt-0.5 font-body-sm text-body-sm text-on-surface-variant">{subtitle}</p>}
           </div>
           {icon && (
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/20 text-violet-400">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary">
               {icon}
             </div>
           )}

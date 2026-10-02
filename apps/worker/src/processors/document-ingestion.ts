@@ -5,63 +5,84 @@ import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { OpenAIEmbeddings } from '@langchain/openai';
-import { env } from '../config/env';
+import { embedText, isEmbeddingsConfigured, toPgVector } from '../lib/embeddings';
 
-// Use require for pdf-parse to avoid TS call signature issues
-const pdfParse = require('pdf-parse');
+// pdf-parse v2 is a rewrite that exposes a PDFParse class instead of a
+// callable parser function. Use require to avoid the ESM/CJS typing mismatch.
+const { PDFParse } = require('pdf-parse');
 
 const prisma = new PrismaClient();
-const embeddings = new OpenAIEmbeddings({
-  openAIApiKey: env.LLM_API_KEY,
-  modelName: 'text-embedding-3-small',
-});
+
+type ExtractedPage = { num: number; text: string };
+
+/** Extracts per-page text from a PDF using the pdf-parse v2 API. */
+async function extractPdfPages(fileUrl: string): Promise<ExtractedPage[]> {
+  const data = fs.readFileSync(fileUrl);
+  const parser = new PDFParse({ data: new Uint8Array(data) });
+  try {
+    const result = await parser.getText();
+    return result.pages;
+  } finally {
+    await parser.destroy();
+  }
+}
 
 export const documentIngestionWorker = new Worker('document-ingestion', async (job: Job) => {
   const { documentId, versionId, fileUrl, tenantId } = job.data;
   logger.info(`Processing document ingestion job ${job.id}`, { documentId, versionId });
 
   try {
-    // 1. Read file
-    const ext = path.extname(fileUrl).toLowerCase();
-    let text = '';
-
-    if (ext === '.pdf') {
-      const dataBuffer = fs.readFileSync(fileUrl);
-      const data = await pdfParse(dataBuffer);
-      text = data.text;
-    } else {
-      text = fs.readFileSync(fileUrl, 'utf-8');
+    if (!isEmbeddingsConfigured()) {
+      throw new Error('GEMINI_API_KEY is not configured; cannot generate document embeddings');
     }
 
-    if (!text.trim()) {
+    // 1. Read file
+    const ext = path.extname(fileUrl).toLowerCase();
+    let pages: ExtractedPage[];
+
+    if (ext === '.pdf') {
+      pages = (await extractPdfPages(fileUrl)).filter((p) => p.text.trim().length > 0);
+    } else {
+      pages = [{ num: 1, text: fs.readFileSync(fileUrl, 'utf-8') }];
+    }
+
+    if (pages.length === 0 || pages.every((p) => !p.text.trim())) {
       throw new Error('Document is empty or text extraction failed');
     }
 
-    // 2. Chunk text
+    // 2. Chunk each page separately so chunks keep their real page number
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000,
       chunkOverlap: 200,
     });
-    const chunks = await splitter.createDocuments([text]);
+
+    // Re-ingesting a version replaces its chunks instead of duplicating them
+    // when a previous attempt failed part-way through.
+    await prisma.$executeRawUnsafe(
+      `DELETE FROM document_chunks WHERE "documentVersionId" = $1`,
+      versionId
+    );
 
     // 3. Generate embeddings & Store
-    let pageNumber = 1; // Basic page number approximation
-    for (const chunk of chunks) {
-      const vector = await embeddings.embedQuery(chunk.pageContent);
-      
-      // Since prisma doesn't support writing vectors directly via ORM yet, use executeRawUnsafe
-      await prisma.$executeRawUnsafe(
-        `INSERT INTO document_chunks ("id", "tenantId", "documentVersionId", "chunkText", "embedding", "pageNumber", "metadata", "createdAt")
-         VALUES (gen_random_uuid(), $1, $2, $3, $4::vector, $5, $6::jsonb, NOW())`,
-        tenantId,
-        versionId,
-        chunk.pageContent,
-        `[${vector.join(',')}]`,
-        pageNumber,
-        JSON.stringify(chunk.metadata || {})
-      );
-      pageNumber++;
+    let chunksCount = 0;
+    for (const page of pages) {
+      const chunks = await splitter.createDocuments([page.text]);
+      for (const chunk of chunks) {
+        const vector = await embedText(chunk.pageContent);
+
+        // Since prisma doesn't support writing vectors directly via ORM yet, use executeRawUnsafe
+        await prisma.$executeRawUnsafe(
+          `INSERT INTO document_chunks ("id", "tenantId", "documentVersionId", "chunkText", "embedding", "pageNumber", "metadata", "createdAt")
+           VALUES (gen_random_uuid(), $1, $2, $3, $4::vector, $5, $6::jsonb, NOW())`,
+          tenantId,
+          versionId,
+          chunk.pageContent,
+          toPgVector(vector),
+          page.num,
+          JSON.stringify(chunk.metadata || {})
+        );
+        chunksCount++;
+      }
     }
 
     // 4. Update Document status
@@ -70,7 +91,7 @@ export const documentIngestionWorker = new Worker('document-ingestion', async (j
       data: { status: 'READY' }
     });
 
-    return { success: true, chunksCount: chunks.length };
+    return { success: true, chunksCount };
   } catch (error: any) {
     logger.error(`Document ingestion job ${job.id} failed: ${error.message}`);
     await prisma.document.update({

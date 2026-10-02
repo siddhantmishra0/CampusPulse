@@ -64,8 +64,8 @@ export function CampaignDetail() {
       <div className="flex items-center space-x-4">
         <Button variant="ghost" onClick={() => navigate('/campaigns')}>← Back</Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">{campaign.name}</h1>
-          <p className="text-slate-500">Created on {new Date(campaign.createdAt).toLocaleDateString()}</p>
+          <h1 className="text-2xl font-bold text-on-surface ">{campaign.name}</h1>
+          <p className="text-on-surface-variant">Created on {new Date(campaign.createdAt).toLocaleDateString()}</p>
         </div>
         <Badge variant={
           campaign.status === 'ACTIVE' ? 'success' :
@@ -77,20 +77,20 @@ export function CampaignDetail() {
         </Badge>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800">
-          <h3 className="text-lg font-medium text-slate-900 dark:text-slate-50">Campaign Overview</h3>
+      <div className="bg-surface-container-lowest  rounded-xl border border-outline-variant  overflow-hidden">
+        <div className="px-6 py-5 border-b border-outline-variant ">
+          <h3 className="text-lg font-medium text-on-surface ">Campaign Overview</h3>
         </div>
         <div className="px-6 py-5 space-y-4">
           <div>
-            <h4 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Description</h4>
-            <p className="text-slate-900 dark:text-slate-300">{campaign.description}</p>
+            <h4 className="text-sm font-medium text-on-surface-variant uppercase tracking-wider mb-1">Description</h4>
+            <p className="text-on-surface ">{campaign.description}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Schedule</h4>
-              <p className="text-slate-900 dark:text-slate-300">
+              <h4 className="text-sm font-medium text-on-surface-variant uppercase tracking-wider mb-1">Schedule</h4>
+              <p className="text-on-surface ">
                 <span className="font-medium">Starts:</span> {new Date(campaign.startAt).toLocaleString()}
                 <br />
                 <span className="font-medium">Ends:</span> {new Date(campaign.endAt).toLocaleString()}
@@ -98,8 +98,8 @@ export function CampaignDetail() {
             </div>
             
             <div>
-              <h4 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Targeting</h4>
-              <ul className="space-y-1 text-slate-900 dark:text-slate-300">
+              <h4 className="text-sm font-medium text-on-surface-variant uppercase tracking-wider mb-1">Targeting</h4>
+              <ul className="space-y-1 text-on-surface ">
                 {campaign.department && <li><span className="font-medium">Department:</span> {campaign.department.name}</li>}
                 {campaign.subject && <li><span className="font-medium">Subject:</span> {campaign.subject.name} ({campaign.subject.code})</li>}
                 {campaign.faculty && <li><span className="font-medium">Faculty:</span> {campaign.faculty.firstName} {campaign.faculty.lastName}</li>}
@@ -108,7 +108,7 @@ export function CampaignDetail() {
           </div>
         </div>
         
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 flex justify-end space-x-3">
+        <div className="px-6 py-4 bg-surface-container-low  border-t border-outline-variant  flex justify-end space-x-3">
           {campaign.status === 'DRAFT' && (
             <>
               <Button variant="outline" onClick={() => handleAction('schedule')} isLoading={transitionMutation.isPending}>Schedule</Button>
@@ -128,7 +128,7 @@ export function CampaignDetail() {
       </div>
       
       {/* Analytics Dashboard (Phase 6 placeholder) */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex items-center justify-center min-h-[200px] text-slate-500">
+      <div className="bg-surface-container-lowest  rounded-xl border border-outline-variant  p-6 flex items-center justify-center min-h-[200px] text-on-surface-variant">
         Analytics and Insights for this campaign will appear here (Phase 6)
       </div>
     </div>

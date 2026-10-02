@@ -16,8 +16,7 @@ function applyDateRange(where: any, start?: string, end?: string, dateField = 'c
 }
 
 /** Sentiment summary counts with optional date range */
-export async function getSentimentSummary(campaignId: string, start?: string, end?: string) {
-  const where: any = { submission: { campaignId } };
+export async function getSentimentSummary(campaignId: string, start?: string, end?: string) {  const where: any = { submission: { campaignId } };
   applyDateRange(where, start, end, 'submission.submittedAt');
   const counts = await prisma.feedbackAnalysis.groupBy({
     by: ['sentiment'],
@@ -50,7 +49,9 @@ export async function getTopTopics(
     orderBy: { confidence: 'desc' },
     take: limit,
   });
-  return topics.map((t: { name: string; confidence: number }) => ({ name: t.name, confidence: t.confidence }));
+  // confidence is nullable in the schema; normalise to 0 so consumers never
+  // render NaN.
+  return topics.map((t) => ({ name: t.name, confidence: Number(t.confidence ?? 0) }));
 }
 
 /** Issue summary counts by category with optional date range */
@@ -113,4 +114,95 @@ export async function exportAnalytics(
   });
   rows.push(`summary,latest,${(data.latestSummary || '').replace(/\n/g, ' ')}`);
   return rows.join('\n');
+}
+
+/**
+ * Institution-wide overview for the analytics hub.
+ * Aggregates submissions, sentiment, submission modality, campaign counts,
+ * top topics and issue throughput in one round trip.
+ */
+export async function getOverview(tenantId: string) {
+  const campaignWhere = { tenantId, deletedAt: null };
+  const submissionWhere = { campaign: campaignWhere };
+
+  const [
+    submissionsBySource,
+    sentimentRows,
+    campaignsByStatus,
+    topics,
+    issuesByStatus,
+  ] = await Promise.all([
+    prisma.feedbackSubmission.groupBy({
+      by: ['source'],
+      where: submissionWhere,
+      _count: { source: true },
+    }),
+    prisma.feedbackAnalysis.groupBy({
+      by: ['sentiment'],
+      where: { submission: submissionWhere },
+      _count: { sentiment: true },
+    }),
+    prisma.campaign.groupBy({
+      by: ['status'],
+      where: campaignWhere,
+      _count: { status: true },
+    }),
+    prisma.feedbackTopic.findMany({
+      where: { analysis: { submission: submissionWhere } },
+      select: { name: true, confidence: true },
+      orderBy: { confidence: 'desc' },
+      take: 12,
+    }),
+    prisma.issue.groupBy({
+      by: ['status'],
+      where: { tenantId },
+      _count: { status: true },
+    }),
+  ]);
+
+  const sentiment: Record<string, number> = {
+    POSITIVE: 0, NEUTRAL: 0, NEGATIVE: 0, MIXED: 0,
+  };
+  sentimentRows.forEach((r: { sentiment: string; _count: { sentiment: number } }) => {
+    sentiment[r.sentiment] = Number(r._count.sentiment);
+  });
+
+  const campaigns: Record<string, number> = {};
+  campaignsByStatus.forEach((c: { status: string; _count: { status: number } }) => {
+    campaigns[c.status] = Number(c._count.status);
+  });
+
+  const issues: Record<string, number> = {};
+  issuesByStatus.forEach((i: { status: string; _count: { status: number } }) => {
+    issues[i.status] = Number(i._count.status);
+  });
+
+  const conversational = submissionsBySource
+    .filter((s: { source: string }) => s.source === 'CONVERSATIONAL')
+    .reduce((sum: number, s: { _count: { source: number } }) => sum + Number(s._count.source), 0);
+  const traditional = submissionsBySource
+    .filter((s: { source: string }) => s.source === 'TRADITIONAL')
+    .reduce((sum: number, s: { _count: { source: number } }) => sum + Number(s._count.source), 0);
+
+  const totalSubmissions = conversational + traditional;
+
+  const openIssues = Object.entries(issues)
+    .filter(([s]) => !['RESOLVED', 'ARCHIVED'].includes(s))
+    .reduce((sum, [, c]) => sum + c, 0);
+  const closedIssues = ['RESOLVED', 'ARCHIVED'].reduce((sum, s) => sum + (issues[s] ?? 0), 0);
+
+  return {
+    totalSubmissions,
+    submissionsBySource: { CONVERSATIONAL: conversational, TRADITIONAL: traditional },
+    sentiment,
+    campaigns,
+    totalCampaigns: Object.values(campaigns).reduce((a, b) => a + b, 0),
+    topTopics: topics,
+    issues: { open: openIssues, closed: closedIssues, total: openIssues + closedIssues },
+    lastAnalyzedAt: (await prisma.feedbackAnalysis.findFirst({
+      where: { submission: submissionWhere },
+      orderBy: { analyzedAt: 'desc' },
+      select: { analyzedAt: true },
+    }))?.analyzedAt ?? null,
+  };
 }

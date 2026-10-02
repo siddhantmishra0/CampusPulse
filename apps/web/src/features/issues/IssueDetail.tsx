@@ -46,35 +46,40 @@ type Issue = {
 };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
+// Status colours mirror IssueBoard so the two views read identically.
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  IDENTIFIED:    { label: 'Identified',     color: '#f59e0b', bg: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-  UNDER_REVIEW:  { label: 'Under Review',   color: '#06b6d4', bg: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
-  ACTION_PLANNED:{ label: 'Action Planned', color: '#8b5cf6', bg: 'bg-violet-500/20 text-violet-400 border-violet-500/30' },
-  IN_PROGRESS:   { label: 'In Progress',    color: '#3b82f6', bg: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  RESOLVED:      { label: 'Resolved',       color: '#10b981', bg: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-  ARCHIVED:      { label: 'Archived',       color: '#6b7280', bg: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
+const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string }> = {
+  IDENTIFIED:     { label: 'Identified',     dot: 'bg-error',     bg: 'bg-error-container text-on-error-container' },
+  UNDER_REVIEW:   { label: 'Under Review',   dot: 'bg-tertiary',  bg: 'bg-tertiary-container text-on-tertiary-container' },
+  ACTION_PLANNED: { label: 'Action Planned', dot: 'bg-primary',   bg: 'bg-primary-container text-on-primary-container' },
+  IN_PROGRESS:    { label: 'In Progress',    dot: 'bg-primary',   bg: 'bg-primary-container text-on-primary-container' },
+  RESOLVED:       { label: 'Resolved',       dot: 'bg-secondary', bg: 'bg-secondary-container text-on-secondary-container' },
+  ARCHIVED:       { label: 'Archived',       dot: 'bg-outline',   bg: 'bg-surface-container text-on-surface-variant' },
 };
 
 const ACTION_STATUS_CONFIG: Record<string, { label: string; bg: string }> = {
-  PLANNED:     { label: 'Planned',     bg: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
-  IN_PROGRESS: { label: 'In Progress', bg: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  COMPLETED:   { label: 'Completed',   bg: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-  CANCELLED:   { label: 'Cancelled',   bg: 'bg-red-500/20 text-red-400 border-red-500/30' },
+  PLANNED:     { label: 'Planned',     bg: 'bg-surface-container text-on-surface-variant' },
+  IN_PROGRESS: { label: 'In Progress', bg: 'bg-primary-container text-on-primary-container' },
+  COMPLETED:   { label: 'Completed',   bg: 'bg-secondary-container text-on-secondary-container' },
+  CANCELLED:   { label: 'Cancelled',   bg: 'bg-error-container text-on-error-container' },
 };
 
 const ISSUE_STATUSES = ['IDENTIFIED', 'UNDER_REVIEW', 'ACTION_PLANNED', 'IN_PROGRESS', 'RESOLVED', 'ARCHIVED'];
 
+const card = 'rounded-xl bg-surface-container-lowest border border-outline-variant/50 shadow-sm';
+const inputClass =
+  'w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-md text-body-md text-on-surface placeholder-outline outline-none focus:border-primary focus:ring-2 focus:ring-primary/30';
+
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
 const MetaItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) => (
-  <div className="flex items-start gap-3">
-    <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white/5">
-      <Icon className="h-4 w-4 text-slate-400" />
+  <div className="flex items-start gap-2">
+    <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-surface-container">
+      <Icon className="h-4 w-4 text-on-surface-variant" />
     </div>
     <div>
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="text-sm font-medium text-slate-200">{value}</p>
+      <p className="font-body-sm text-body-sm text-outline">{label}</p>
+      <p className="font-title-sm text-title-sm text-on-surface">{value}</p>
     </div>
   </div>
 );
@@ -94,27 +99,31 @@ const ActionCard = ({
   const cfg = ACTION_STATUS_CONFIG[action.status] ?? ACTION_STATUS_CONFIG['PLANNED'];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] transition-colors hover:bg-white/[0.06]">
+    <div className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest transition-colors hover:border-outline-variant">
       <button
-        className="flex w-full items-center justify-between px-5 py-4 text-left"
+        className="flex w-full items-center justify-between gap-3 px-space-md py-space-md text-left"
         onClick={() => setOpen(o => !o)}
       >
-        <div className="flex items-center gap-3">
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${cfg.bg}`}>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 font-label-sm text-label-sm font-semibold ${cfg.bg}`}>
             {cfg.label}
           </span>
-          <span className="text-sm font-semibold text-white">{action.title}</span>
+          <span className="font-title-sm text-title-sm text-on-surface truncate">{action.title}</span>
         </div>
-        {open ? <ChevronDown className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
+        {open
+          ? <ChevronDown className="h-4 w-4 shrink-0 text-on-surface-variant" />
+          : <ChevronRight className="h-4 w-4 shrink-0 text-on-surface-variant" />}
       </button>
 
       {open && (
-        <div className="border-t border-white/5 px-5 pb-5 pt-4">
-          <p className="mb-4 text-sm text-slate-400">{action.description}</p>
+        <div className="border-t border-outline-variant/50 px-space-md pb-space-md pt-space-sm">
+          <p className="mb-3 font-body-md text-body-md text-on-surface-variant">{action.description}</p>
           {action.notes && (
-            <p className="mb-4 rounded-xl bg-white/5 px-4 py-3 text-xs italic text-slate-400">{action.notes}</p>
+            <p className="mb-3 rounded-lg border border-outline-variant/50 bg-surface-container-low px-3 py-2 font-body-sm text-body-sm italic text-on-surface-variant">
+              {action.notes}
+            </p>
           )}
-          <div className="mb-4 flex flex-wrap gap-4 text-xs text-slate-500">
+          <div className="mb-3 flex flex-wrap gap-4 font-body-sm text-body-sm text-outline">
             {action.owner && (
               <span className="flex items-center gap-1">
                 <User className="h-3 w-3" />
@@ -131,15 +140,15 @@ const ActionCard = ({
 
           {/* Published updates timeline */}
           {action.publishedUpdates.length > 0 && (
-            <div className="mb-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Updates</p>
-              <ol className="relative border-l border-white/10">
+            <div className="mb-3">
+              <p className="mb-2 font-label-sm text-label-sm uppercase tracking-wider text-outline">Updates</p>
+              <ol className="relative border-l-2 border-outline-variant">
                 {action.publishedUpdates.map(u => (
-                  <li key={u.id} className="mb-6 ml-4">
-                    <div className="absolute -left-1.5 h-3 w-3 rounded-full border border-violet-500/60 bg-violet-600/40" />
-                    <p className="text-xs text-slate-500">{new Date(u.publishedAt).toLocaleString()}</p>
-                    <p className="mt-1 text-sm font-semibold text-white">{u.title}</p>
-                    <p className="mt-0.5 text-sm text-slate-400">{u.content}</p>
+                  <li key={u.id} className="mb-4 ml-4">
+                    <div className="absolute -left-[5px] h-2 w-2 rounded-full bg-primary" />
+                    <p className="font-body-sm text-body-sm text-outline">{new Date(u.publishedAt).toLocaleString()}</p>
+                    <p className="mt-0.5 font-title-sm text-title-sm text-on-surface">{u.title}</p>
+                    <p className="mt-0.5 font-body-sm text-body-sm text-on-surface-variant">{u.content}</p>
                   </li>
                 ))}
               </ol>
@@ -151,26 +160,26 @@ const ActionCard = ({
             <button
               id={`publish-update-${action.id}`}
               onClick={() => setShowUpdateForm(true)}
-              className="flex items-center gap-1.5 text-xs font-medium text-violet-400 transition hover:text-violet-300"
+              className="flex items-center gap-1.5 font-title-sm text-title-sm text-primary transition hover:underline"
             >
               <Plus className="h-3.5 w-3.5" /> Publish update
             </button>
           ) : (
-            <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs font-semibold text-slate-300">Publish Update</p>
+            <div className="flex flex-col gap-2 rounded-lg border border-outline-variant/60 bg-surface-container-low p-3">
+              <p className="font-title-sm text-title-sm text-on-surface">Publish Update</p>
               <input
                 type="text"
                 placeholder="Update title"
                 value={updateTitle}
                 onChange={e => setUpdateTitle(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50"
+                className={inputClass}
               />
               <textarea
                 placeholder="Describe the progress…"
                 value={updateContent}
                 onChange={e => setUpdateContent(e.target.value)}
                 rows={3}
-                className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50"
+                className={`${inputClass} resize-none`}
               />
               <div className="flex gap-2">
                 <button
@@ -183,13 +192,13 @@ const ActionCard = ({
                       setShowUpdateForm(false);
                     }
                   }}
-                  className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-violet-500"
+                  className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 font-label-sm text-label-sm font-semibold text-on-primary transition hover:bg-primary/90"
                 >
                   <Send className="h-3.5 w-3.5" /> Publish
                 </button>
                 <button
                   onClick={() => setShowUpdateForm(false)}
-                  className="rounded-lg border border-white/10 px-4 py-2 text-xs text-slate-400 transition hover:text-white"
+                  className="rounded-lg border border-outline-variant px-4 py-2 font-label-sm text-label-sm text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface"
                 >
                   Cancel
                 </button>
@@ -251,10 +260,10 @@ export const IssueDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-violet-950">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-violet-500 border-t-transparent" />
-          <p className="text-sm text-slate-400">Loading issue…</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="font-body-md text-body-md text-on-surface-variant">Loading issue…</p>
         </div>
       </div>
     );
@@ -262,8 +271,10 @@ export const IssueDetail = () => {
 
   if (error || !issue) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-violet-950 text-red-400">
-        Failed to load issue.
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="rounded-xl border border-error/40 bg-error-container px-space-lg py-4 font-body-md text-body-md text-on-error-container">
+          Failed to load issue.
+        </div>
       </div>
     );
   }
@@ -271,199 +282,195 @@ export const IssueDetail = () => {
   const statusCfg = STATUS_CONFIG[issue.status] ?? STATUS_CONFIG['IDENTIFIED'];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-violet-950">
+    <div className="flex w-full flex-col gap-space-lg pb-space-xl">
       {/* Header */}
-      <div className="border-b border-white/10 bg-white/5 px-8 py-6 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Link
-                to="/issues"
-                id="back-to-issues"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-400 transition hover:text-white"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/30">
-                <AlertTriangle className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">{issue.title}</h1>
-                <p className="text-xs font-mono text-slate-500">{issue.id}</p>
+      <div className="flex flex-wrap items-center justify-between gap-space-md py-space-md">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link
+            to="/issues"
+            id="back-to-issues"
+            title="Back to issues"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-error-container text-on-error-container">
+            <AlertTriangle className="h-6 w-6" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight break-words">
+              {issue.title}
+            </h1>
+            <p className="font-mono-data text-mono-data text-outline break-all">{issue.id}</p>
+          </div>
+        </div>
+
+        {isAdmin && (
+          <select
+            id="status-select"
+            value={newStatus || issue.status}
+            onChange={e => {
+              setNewStatus(e.target.value);
+              updateStatusMutation.mutate(e.target.value);
+            }}
+            className="h-10 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 font-title-sm text-title-sm text-on-surface outline-none focus:border-primary"
+          >
+            {ISSUE_STATUSES.map(s => (
+              <option key={s} value={s}>{STATUS_CONFIG[s]?.label ?? s}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Meta + Description */}
+      <div className="grid grid-cols-1 gap-space-md lg:grid-cols-3 items-start">
+        <div className="lg:col-span-2 flex flex-col gap-space-md">
+          <div className={`${card} p-space-lg`}>
+            <div className="mb-3 flex flex-wrap gap-2">
+              <span className={`inline-flex items-center rounded-full px-3 py-1 font-label-sm text-label-sm font-semibold ${statusCfg.bg}`}>
+                <span className={`mr-1.5 h-2 w-2 rounded-full ${statusCfg.dot}`} />
+                {statusCfg.label}
+              </span>
+              <span className="rounded-full bg-surface-container px-3 py-1 font-label-sm text-label-sm text-on-surface-variant capitalize">
+                {issue.category.replace(/_/g, ' ').toLowerCase()}
+              </span>
+            </div>
+            <p className="font-body-md text-body-md leading-relaxed text-on-surface-variant">
+              {issue.description}
+            </p>
+          </div>
+
+          {/* Source Campaigns */}
+          {issue.sourceCampaigns.length > 0 && (
+            <div className={`${card} p-space-md`}>
+              <p className="mb-3 font-label-sm text-label-sm uppercase tracking-wider text-outline">
+                Source Campaigns
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {issue.sourceCampaigns.map(c => (
+                  <Link
+                    key={c.id}
+                    to={`/campaigns/${c.id}`}
+                    className="rounded-full border border-primary/30 bg-primary-fixed px-3 py-1 font-body-sm text-body-sm text-primary transition hover:bg-primary-fixed-dim"
+                  >
+                    {c.title}
+                  </Link>
+                ))}
               </div>
             </div>
+          )}
+        </div>
 
-            {isAdmin && (
-              <div className="flex items-center gap-2">
-                <select
-                  id="status-select"
-                  value={newStatus || issue.status}
-                  onChange={e => {
-                    setNewStatus(e.target.value);
-                    updateStatusMutation.mutate(e.target.value);
-                  }}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300 outline-none focus:border-violet-500/50"
-                >
-                  {ISSUE_STATUSES.map(s => (
-                    <option key={s} value={s} className="bg-slate-900">{STATUS_CONFIG[s]?.label ?? s}</option>
-                  ))}
-                </select>
-              </div>
+        {/* Meta Sidebar */}
+        <div className={`${card} p-space-md`}>
+          <p className="mb-3 font-label-sm text-label-sm uppercase tracking-wider text-outline">Details</p>
+          <div className="flex flex-col gap-3">
+            <MetaItem icon={Tag} label="Category" value={issue.category.replace(/_/g, ' ')} />
+            {issue.assignedDepartment && (
+              <MetaItem icon={Building2} label="Department" value={issue.assignedDepartment.name} />
             )}
+            {issue.assignedReviewer && (
+              <MetaItem icon={User} label="Reviewer"
+                value={`${issue.assignedReviewer.firstName} ${issue.assignedReviewer.lastName}`}
+              />
+            )}
+            {issue.sourceFeedbackCount > 0 && (
+              <MetaItem icon={Zap} label="Source Feedback" value={`${issue.sourceFeedbackCount} submissions`} />
+            )}
+            <MetaItem icon={Clock} label="Created" value={new Date(issue.createdAt).toLocaleDateString()} />
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="mx-auto max-w-5xl space-y-6 px-8 py-8">
-        {/* Meta + Description */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
-              <div className="mb-4 flex flex-wrap gap-2">
-                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${statusCfg.bg}`}>
-                  <span className="mr-1.5 h-2 w-2 rounded-full" style={{ background: statusCfg.color }} />
-                  {statusCfg.label}
-                </span>
-                <span className="rounded-full bg-slate-700/60 px-3 py-1 text-xs text-slate-300 capitalize">
-                  {issue.category.replace(/_/g, ' ').toLowerCase()}
-                </span>
-              </div>
-              <p className="text-sm leading-relaxed text-slate-300">{issue.description}</p>
-            </div>
-
-            {/* Source Campaigns */}
-            {issue.sourceCampaigns.length > 0 && (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Source Campaigns</p>
-                <div className="flex flex-wrap gap-2">
-                  {issue.sourceCampaigns.map(c => (
-                    <Link
-                      key={c.id}
-                      to={`/campaigns/${c.id}`}
-                      className="rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs text-violet-300 transition hover:bg-violet-500/20"
-                    >
-                      {c.title}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+      {/* Improvement Actions */}
+      <div className="flex flex-col gap-space-sm">
+        <div className="flex items-center justify-between gap-space-sm">
+          <div className="flex items-center gap-2">
+            <ListChecks className="h-5 w-5 text-primary" />
+            <h2 className="font-title-md text-title-md text-on-surface">Improvement Actions</h2>
+            <span className="rounded-full bg-primary-container px-2 py-0.5 font-label-sm text-label-sm font-semibold text-on-primary-container">
+              {issue.actions.length}
+            </span>
           </div>
-
-          {/* Meta Sidebar */}
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Details</p>
-              <div className="space-y-4">
-                <MetaItem icon={Tag} label="Category" value={issue.category.replace(/_/g, ' ')} />
-                {issue.assignedDepartment && (
-                  <MetaItem icon={Building2} label="Department" value={issue.assignedDepartment.name} />
-                )}
-                {issue.assignedReviewer && (
-                  <MetaItem icon={User} label="Reviewer"
-                    value={`${issue.assignedReviewer.firstName} ${issue.assignedReviewer.lastName}`}
-                  />
-                )}
-                {issue.sourceFeedbackCount > 0 && (
-                  <MetaItem icon={Zap} label="Source Feedback" value={`${issue.sourceFeedbackCount} submissions`} />
-                )}
-                <MetaItem icon={Clock} label="Created" value={new Date(issue.createdAt).toLocaleDateString()} />
-              </div>
-            </div>
-          </div>
+          {isAdmin && (
+            <button
+              id="add-action-btn"
+              onClick={() => setShowActionForm(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 font-title-sm text-title-sm font-semibold text-on-primary transition hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" /> Add Action
+            </button>
+          )}
         </div>
 
-        {/* Improvement Actions */}
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ListChecks className="h-5 w-5 text-violet-400" />
-              <h2 className="text-lg font-bold text-white">Improvement Actions</h2>
-              <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-bold text-violet-400">
-                {issue.actions.length}
-              </span>
+        {/* Add Action Form */}
+        {showActionForm && (
+          <div className="rounded-xl border border-primary/40 bg-primary-fixed p-space-md">
+            <p className="mb-3 font-title-sm text-title-sm text-on-primary-fixed">New Improvement Action</p>
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                placeholder="Action title"
+                value={actionTitle}
+                onChange={e => setActionTitle(e.target.value)}
+                className={inputClass}
+              />
+              <textarea
+                placeholder="Describe the action plan…"
+                value={actionDesc}
+                onChange={e => setActionDesc(e.target.value)}
+                rows={3}
+                className={`${inputClass} resize-none`}
+              />
+              <div className="flex gap-2">
+                <button
+                  id="submit-action-btn"
+                  onClick={() => {
+                    if (actionTitle && actionDesc)
+                      createActionMutation.mutate({ title: actionTitle, description: actionDesc });
+                  }}
+                  disabled={createActionMutation.isPending}
+                  className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 font-title-sm text-title-sm font-semibold text-on-primary transition hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {createActionMutation.isPending ? 'Creating…' : 'Create'}
+                </button>
+                <button
+                  onClick={() => { setShowActionForm(false); setActionTitle(''); setActionDesc(''); }}
+                  className="rounded-lg border border-outline-variant px-5 py-2 font-title-sm text-title-sm text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
+          </div>
+        )}
+
+        {issue.actions.length === 0 && !showActionForm && (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant bg-surface-container-lowest py-space-xl text-center">
+            <CheckCircle2 className="mb-2 h-8 w-8 text-outline" />
+            <p className="font-body-md text-body-md text-outline">No actions planned yet.</p>
             {isAdmin && (
               <button
-                id="add-action-btn"
                 onClick={() => setShowActionForm(true)}
-                className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-violet-500"
+                className="mt-2 font-title-sm text-title-sm text-primary transition hover:underline"
               >
-                <Plus className="h-4 w-4" /> Add Action
+                + Add the first action
               </button>
             )}
           </div>
+        )}
 
-          {/* Add Action Form */}
-          {showActionForm && (
-            <div className="mb-4 rounded-2xl border border-violet-500/30 bg-violet-500/10 p-5">
-              <p className="mb-3 text-sm font-semibold text-white">New Improvement Action</p>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="Action title"
-                  value={actionTitle}
-                  onChange={e => setActionTitle(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50"
-                />
-                <textarea
-                  placeholder="Describe the action plan…"
-                  value={actionDesc}
-                  onChange={e => setActionDesc(e.target.value)}
-                  rows={3}
-                  className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50"
-                />
-                <div className="flex gap-2">
-                  <button
-                    id="submit-action-btn"
-                    onClick={() => {
-                      if (actionTitle && actionDesc)
-                        createActionMutation.mutate({ title: actionTitle, description: actionDesc });
-                    }}
-                    disabled={createActionMutation.isPending}
-                    className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-5 py-2 text-xs font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50"
-                  >
-                    {createActionMutation.isPending ? 'Creating…' : 'Create'}
-                  </button>
-                  <button
-                    onClick={() => { setShowActionForm(false); setActionTitle(''); setActionDesc(''); }}
-                    className="rounded-xl border border-white/10 px-5 py-2 text-xs text-slate-400 transition hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {issue.actions.length === 0 && !showActionForm && (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/[0.02] py-16 text-center">
-              <CheckCircle2 className="mb-3 h-8 w-8 text-slate-600" />
-              <p className="text-sm text-slate-500">No actions planned yet.</p>
-              {isAdmin && (
-                <button
-                  onClick={() => setShowActionForm(true)}
-                  className="mt-3 text-xs font-medium text-violet-400 transition hover:text-violet-300"
-                >
-                  + Add the first action
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {issue.actions.map(action => (
-              <ActionCard
-                key={action.id}
-                action={action}
-                issueId={issue.id}
-                onPublishUpdate={(actionId, title, content) =>
-                  publishUpdateMutation.mutate({ actionId, title, content })
-                }
-              />
-            ))}
-          </div>
+        <div className="flex flex-col gap-2">
+          {issue.actions.map(action => (
+            <ActionCard
+              key={action.id}
+              action={action}
+              issueId={issue.id}
+              onPublishUpdate={(actionId, title, content) =>
+                publishUpdateMutation.mutate({ actionId, title, content })
+              }
+            />
+          ))}
         </div>
       </div>
     </div>

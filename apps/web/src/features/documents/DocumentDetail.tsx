@@ -19,6 +19,13 @@ type DocumentDetailType = {
   }[];
 };
 
+const STATUS_STYLES: Record<string, { chip: string; label: string }> = {
+  READY: { chip: 'bg-secondary-container text-on-secondary-container', label: 'READY' },
+  UPLOADED: { chip: 'bg-surface-container text-on-surface-variant', label: 'QUEUED' },
+  PROCESSING: { chip: 'bg-tertiary-container text-on-tertiary-container', label: 'INGESTING' },
+  FAILED: { chip: 'bg-error-container text-on-error-container', label: 'FAILED' },
+};
+
 export const DocumentDetail = () => {
   const { id } = useParams<{ id: string }>();
 
@@ -31,94 +38,123 @@ export const DocumentDetail = () => {
     enabled: !!id,
   });
 
+  const card = 'rounded-xl bg-surface-container-lowest border border-outline-variant/50 shadow-sm';
+
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
 
   if (error || !document) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-red-400">
-        Document not found.
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="rounded-xl border border-error/40 bg-error-container px-space-lg py-4 font-body-md text-body-md text-on-error-container">
+          Document not found.
+        </div>
       </div>
     );
   }
 
-  // latestVersion variable removed as it was unused
+  const status = STATUS_STYLES[document.status] ?? {
+    chip: 'bg-surface-container text-on-surface-variant',
+    label: document.status,
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
-      <div className="border-b border-white/10 bg-white/5 px-8 py-6 backdrop-blur-sm">
-        <div className="mx-auto max-w-4xl">
-          <div className="flex items-center gap-4">
-            <Link
-              to="/knowledge"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-400 transition hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
-              <FileText className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">{document.title}</h1>
-              <p className="text-xs font-mono text-slate-500">{document.id}</p>
-            </div>
+    <div className="flex w-full flex-col gap-space-lg pb-space-xl">
+      {/* Header */}
+      <div className="flex items-start gap-space-md py-space-md">
+        <Link
+          to="/knowledge"
+          title="Back to knowledge base"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-container text-on-primary-container">
+          <FileText className="h-6 w-6" />
+        </div>
+        <div className="flex flex-col gap-1 min-w-0">
+          <h1 className="font-headline-md text-headline-md text-on-surface tracking-tight break-words">
+            {document.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold ${status.chip}`}>
+              {status.label}
+            </span>
+            <span className="font-mono-data text-mono-data text-outline break-all">{document.id}</span>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-8 py-8">
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="md:col-span-2 space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              <h2 className="mb-4 text-lg font-semibold text-white">Overview</h2>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                {document.description || 'No description provided.'}
-              </p>
-            </div>
+      <div className="grid grid-cols-1 gap-space-md lg:grid-cols-3 items-start">
+        <div className="lg:col-span-2 flex flex-col gap-space-md">
+          <div className={`${card} p-space-lg`}>
+            <h2 className="mb-3 font-title-md text-title-md text-on-surface">Overview</h2>
+            <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+              {document.description || 'No description provided.'}
+            </p>
+          </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              <h2 className="mb-4 text-lg font-semibold text-white">Version History & Processing</h2>
-              <div className="space-y-4">
-                {document.versions.map(v => (
-                  <div key={v.id} className="flex items-center justify-between rounded-xl bg-white/5 p-4 border border-white/5">
+          <div className={`${card} p-space-lg`}>
+            <h2 className="mb-4 font-title-md text-title-md text-on-surface">
+              Version History &amp; Processing
+            </h2>
+            {document.versions.length === 0 ? (
+              <p className="font-body-md text-body-md text-outline py-4 text-center">
+                No versions recorded yet.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {document.versions.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-variant/60 bg-surface-container-low p-space-md"
+                  >
                     <div>
-                      <p className="font-semibold text-white">Version {v.versionNumber}</p>
-                      <p className="text-xs text-slate-400">Uploaded {new Date(v.createdAt).toLocaleString()}</p>
+                      <p className="font-title-sm text-title-sm text-on-surface">
+                        Version {v.versionNumber}
+                      </p>
+                      <p className="font-body-sm text-body-sm text-outline">
+                        Uploaded {new Date(v.createdAt).toLocaleString()}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-indigo-400">{v._count.chunks} chunks</p>
-                      <p className="text-xs text-slate-500">Vector Embeddings</p>
+                      <p className="font-title-sm text-title-sm text-primary">{v._count.chunks} chunks</p>
+                      <p className="font-body-sm text-body-sm text-outline">Vector embeddings</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            )}
           </div>
+        </div>
 
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Metadata</h3>
-              <div className="space-y-4 text-sm">
-                <div className="flex items-center gap-3 text-slate-300">
-                  <Tag className="h-4 w-4 text-slate-500" /> {document.type}
-                </div>
-                <div className="flex items-center gap-3 text-slate-300">
-                  <Layers className="h-4 w-4 text-slate-500" /> {document.status}
-                </div>
-                {document.department && (
-                  <div className="flex items-center gap-3 text-slate-300">
-                    <Building2 className="h-4 w-4 text-slate-500" /> {document.department.name}
-                  </div>
-                )}
-                <div className="flex items-center gap-3 text-slate-300">
-                  <Calendar className="h-4 w-4 text-slate-500" /> {new Date(document.createdAt).toLocaleDateString()}
-                </div>
+        <div className={`${card} p-space-lg`}>
+          <h3 className="mb-4 font-label-sm text-label-sm uppercase tracking-wider text-outline">
+            Metadata
+          </h3>
+          <div className="flex flex-col gap-3 font-body-md text-body-md">
+            <div className="flex items-center gap-2 text-on-surface-variant">
+              <Tag className="h-4 w-4 shrink-0 text-outline" />
+              <span>{document.type}</span>
+            </div>
+            <div className="flex items-center gap-2 text-on-surface-variant">
+              <Layers className="h-4 w-4 shrink-0 text-outline" />
+              <span>{document.status}</span>
+            </div>
+            {document.department && (
+              <div className="flex items-center gap-2 text-on-surface-variant">
+                <Building2 className="h-4 w-4 shrink-0 text-outline" />
+                <span>{document.department.name}</span>
               </div>
+            )}
+            <div className="flex items-center gap-2 text-on-surface-variant">
+              <Calendar className="h-4 w-4 shrink-0 text-outline" />
+              <span>{new Date(document.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
         </div>

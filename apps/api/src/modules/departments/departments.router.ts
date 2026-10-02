@@ -20,7 +20,7 @@ router.post(
 
 router.get(
   '/subjects',
-  authorize([UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER, UserRole.FACULTY]),
+  authorize([UserRole.PLATFORM_OWNER, UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER, UserRole.FACULTY]),
   DepartmentsController.getSubjects
 );
 
@@ -34,13 +34,13 @@ router.post(
 
 router.get(
   '/',
-  authorize([UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER, UserRole.FACULTY]),
+  authorize([UserRole.PLATFORM_OWNER, UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER, UserRole.FACULTY]),
   DepartmentsController.getDepartments
 );
 
 router.get(
   '/:id',
-  authorize([UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER, UserRole.FACULTY]),
+  authorize([UserRole.PLATFORM_OWNER, UserRole.INSTITUTION_ADMIN, UserRole.DEPARTMENT_REVIEWER, UserRole.FACULTY]),
   DepartmentsController.getDepartment
 );
 

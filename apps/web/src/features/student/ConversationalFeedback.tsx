@@ -15,14 +15,14 @@ interface ChatMessage {
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-2 justify-start">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 text-sm font-bold shrink-0">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-fixed  text-primary  text-sm font-bold shrink-0">
         AI
       </div>
-      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-bl-sm px-4 py-3">
+      <div className="bg-surface-container-lowest  border border-outline-variant  rounded-2xl rounded-bl-sm px-4 py-3">
         <span className="flex gap-1">
-          <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+          <span className="w-2 h-2 rounded-full bg-outline animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 rounded-full bg-outline animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 rounded-full bg-outline animate-bounce" style={{ animationDelay: '300ms' }} />
         </span>
       </div>
     </div>
@@ -122,15 +122,15 @@ export function ConversationalFeedback() {
   // ── Success screen ────────────────────────────────────────────────────────
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-50 to-slate-100 dark:from-slate-900 dark:to-indigo-950">
-        <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-8 text-center">
-          <div className="mb-4 text-green-500">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary-fixed to-surface-container-low  ">
+        <div className="max-w-md w-full bg-surface-container-lowest  rounded-2xl shadow-xl p-8 text-center">
+          <div className="mb-4 text-success">
             <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-2">Feedback Submitted!</h2>
-          <p className="text-slate-500 mb-6">
+          <h2 className="text-2xl font-bold text-on-surface  mb-2">Feedback Submitted!</h2>
+          <p className="text-on-surface-variant mb-6">
             Thank you for sharing. Your feedback is completely anonymous and will help improve the institution.
           </p>
           <Button className="w-full" onClick={() => navigate('/student/dashboard')}>
@@ -147,7 +147,7 @@ export function ConversationalFeedback() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-3">
           <Spinner />
-          <p className="text-slate-500">Starting your feedback session…</p>
+          <p className="text-on-surface-variant">Starting your feedback session…</p>
         </div>
       </div>
     );
@@ -171,22 +171,22 @@ export function ConversationalFeedback() {
 
   // ── Chat UI ───────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex flex-col h-screen bg-surface-container-low ">
       {/* Header */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center gap-3 shadow-sm">
+      <header className="bg-surface-container-lowest  border-b border-outline-variant  px-4 py-3 flex items-center gap-3 shadow-sm">
         <button
           onClick={() => navigate(`/student/feedback/${campaignId}`)}
-          className="text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+          className="text-on-surface-variant hover:text-on-surface :text-on-surface transition-colors"
           aria-label="Go back"
         >
           ←
         </button>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white text-sm font-bold">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-on-primary text-sm font-bold">
           AI
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 dark:text-slate-50 text-sm truncate">CampusPulse Feedback Assistant</p>
-          <p className="text-xs text-green-600 dark:text-green-400">● Conversation is anonymous</p>
+          <p className="font-semibold text-on-surface  text-sm truncate">CampusPulse Feedback Assistant</p>
+          <p className="font-body-sm text-body-sm text-success">● Conversation is anonymous</p>
         </div>
         <Button
           size="sm"
@@ -194,7 +194,7 @@ export function ConversationalFeedback() {
           onClick={() => submitMutation.mutate()}
           isLoading={submitMutation.isPending}
           disabled={messages.length < 3 || submitMutation.isPending}
-          className="border-green-300 text-green-700 dark:border-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 shrink-0"
+          className="border-outline-variant text-on-surface-variant hover:bg-surface-container shrink-0"
         >
           Finish & Submit
         </Button>
@@ -218,7 +218,7 @@ export function ConversationalFeedback() {
             className={`flex items-end gap-2 ${msg.role === 'USER' ? 'justify-end' : 'justify-start'}`}
           >
             {msg.role === 'ASSISTANT' && (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 text-sm font-bold shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-fixed  text-primary  text-sm font-bold shrink-0">
                 AI
               </div>
             )}
@@ -226,8 +226,8 @@ export function ConversationalFeedback() {
               className={[
                 'max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
                 msg.role === 'USER'
-                  ? 'bg-indigo-600 text-white rounded-br-sm'
-                  : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-bl-sm',
+                  ? 'bg-primary text-on-primary rounded-br-sm'
+                  : 'bg-surface-container-lowest  border border-outline-variant  text-on-surface  rounded-bl-sm',
               ].join(' ')}
             >
               {msg.content}
@@ -240,7 +240,7 @@ export function ConversationalFeedback() {
       </main>
 
       {/* Input area */}
-      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4">
+      <footer className="bg-surface-container-lowest  border-t border-outline-variant  p-4">
         <div className="flex items-end gap-3 max-w-3xl mx-auto">
           <textarea
             value={input}
@@ -249,7 +249,7 @@ export function ConversationalFeedback() {
             disabled={!conversationId || sendMutation.isPending || isTyping}
             rows={2}
             placeholder="Type your response… (Enter to send, Shift+Enter for new line)"
-            className="flex-1 resize-none rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            className="flex-1 resize-none rounded-xl border border-outline-variant  bg-surface-container-low  px-4 py-2.5 text-sm text-on-surface  placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
           />
           <Button
             onClick={handleSend}
@@ -263,7 +263,7 @@ export function ConversationalFeedback() {
             </svg>
           </Button>
         </div>
-        <p className="text-xs text-slate-400 text-center mt-2">
+        <p className="text-xs text-outline text-center mt-2">
           You can submit at any time using the "Finish &amp; Submit" button above.
         </p>
       </footer>

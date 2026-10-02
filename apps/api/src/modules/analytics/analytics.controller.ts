@@ -9,6 +9,7 @@ import {
   getTopTopics,
   getIssueSummary,
   getOverallSummary,
+  getOverview,
   exportAnalytics,
 } from '../../lib/analytics';
 
@@ -36,6 +37,19 @@ const CampaignParamsSchema = z.object({
     })
     .optional(),
 });
+
+router.get(
+  '/overview',
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = req.user!.tenantId!;
+      res.json({ success: true, data: await getOverview(tenantId) });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, error: 'Failed to fetch overview' });
+    }
+  },
+);
 
 router.get(
   '/:campaignId/sentiment',

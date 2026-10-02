@@ -32,3 +32,9 @@ pnpm-debug.log*
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Runtime-uploaded knowledge base documents
+apps/uploads/
